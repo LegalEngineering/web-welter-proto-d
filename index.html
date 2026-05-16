@@ -106,11 +106,95 @@
             100% { transform: translate3d(-6vw, 7vh, 0) scale(1.2); }
         }
 
+        /*
+         * ===== Precision vrstva (Variant D — decentná sémantika) =====
+         * Zámer: pozadie nie je iba dekorácia. Pridávame takmer neviditeľnú
+         * vrstvu technickej mriežky + statické legal markery (§, kóty,
+         * LV-style súradnice). Žiadny "network" chaos, žiadny JS loop —
+         * sémantika ako podvedomý šepot pod aurorou. Minimalistický pól.
+         */
+        .precision {
+            position: fixed;
+            inset: 0;
+            z-index: 2;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        /* Hairline mriežka — presné zarovnanie, takmer na hranici viditeľnosti */
+        .precision__grid {
+            position: absolute;
+            inset: -2px;
+            opacity: 0.5;
+            background-image:
+                linear-gradient(rgba(143, 166, 214, 0.045) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(143, 166, 214, 0.045) 1px, transparent 1px),
+                linear-gradient(rgba(143, 166, 214, 0.07) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(143, 166, 214, 0.07) 1px, transparent 1px);
+            background-size:
+                40px 40px,
+                40px 40px,
+                200px 200px,
+                200px 200px;
+            -webkit-mask-image: radial-gradient(125% 110% at 50% 38%, #000 0%, rgba(0, 0, 0, 0.35) 55%, transparent 82%);
+                    mask-image: radial-gradient(125% 110% at 50% 38%, #000 0%, rgba(0, 0, 0, 0.35) 55%, transparent 82%);
+        }
+
+        /* Statické legal markery — paragrafy / kóty / súradnice v hĺbke */
+        .precision__marks {
+            position: absolute;
+            inset: 0;
+            font-family: 'SFMono-Regular', ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace;
+            font-size: 10px;
+            letter-spacing: 1.5px;
+            color: rgba(143, 166, 214, 0.16);
+            text-transform: uppercase;
+        }
+
+        .precision__marks span {
+            position: absolute;
+            white-space: nowrap;
+        }
+
+        .pm-tl { top: 26px;    left: 30px; }
+        .pm-tr { top: 26px;    right: 30px; text-align: right; }
+        .pm-bl { bottom: 24px; left: 30px; }
+        .pm-br { bottom: 24px; right: 30px; text-align: right; }
+        .pm-mid {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 9px;
+            color: rgba(143, 166, 214, 0.10);
+            letter-spacing: 4px;
+        }
+
+        /* Jemný § glyph hlboko v aure — náznak, nie ikona */
+        .precision__sigil {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Cormorant', Georgia, serif;
+            font-size: 46vmin;
+            line-height: 1;
+            color: rgba(143, 166, 214, 0.022);
+            user-select: none;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .precision__grid { background-size: 28px 28px, 28px 28px, 140px 140px, 140px 140px; }
+            .precision__marks { font-size: 9px; letter-spacing: 1px; }
+            .pm-mid { display: none; }
+            .precision__sigil { font-size: 62vmin; }
+        }
+
         /* Jemná statická zrnitá textúra (film grain) */
         .grain {
             position: fixed;
             inset: 0;
-            z-index: 2;
+            z-index: 3;
             pointer-events: none;
             opacity: 0.05;
             mix-blend-mode: overlay;
@@ -123,7 +207,7 @@
 
         .content {
             position: relative;
-            z-index: 3;
+            z-index: 4;
             min-height: 100vh;
         }
 
@@ -201,32 +285,143 @@
             color: #fff;
         }
 
+        /*
+         * ===== #services — kartová hierarchia (Variant D v2) =====
+         * Asymetrický raster: featured karta (Obchodné právo) dominuje
+         * ľavým horným blokom 2x2; zvyšok je sekundárny rytmus.
+         * Precision: monospace index "01 / .." + hairline coordinate rule.
+         * Hover: decentný lift + glow, žiadne kričanie. Texty NEMENÍM.
+         */
         .services-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 30px;
-            margin-top: 50px;
+            grid-template-columns: repeat(3, 1fr);
+            grid-auto-rows: 1fr;
+            gap: 18px;
+            margin-top: 56px;
+            counter-reset: svc;
         }
 
         .service-card {
-            background: rgba(255, 255, 255, 0.05);
+            --idx: '00';
+            position: relative;
+            background: rgba(255, 255, 255, 0.035);
             backdrop-filter: blur(10px);
-            padding: 30px;
-            border-radius: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: transform 0.3s, box-shadow 0.3s;
+            -webkit-backdrop-filter: blur(10px);
+            padding: 30px 30px 34px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            overflow: hidden;
+            counter-increment: svc;
+            transition: transform 0.45s cubic-bezier(.22,.61,.36,1),
+                        box-shadow 0.45s cubic-bezier(.22,.61,.36,1),
+                        background 0.45s, border-color 0.45s;
+        }
+
+        /* Precision: index v rohu (01 / 02 …) + hairline kóta */
+        .service-card::before {
+            content: '0' counter(svc);
+            position: absolute;
+            top: 18px;
+            right: 22px;
+            font-family: 'SFMono-Regular', ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace;
+            font-size: 0.72rem;
+            letter-spacing: 2px;
+            color: rgba(143, 166, 214, 0.38);
+        }
+
+        .service-card::after {
+            content: '';
+            position: absolute;
+            left: 30px;
+            right: 30px;
+            bottom: 22px;
+            height: 1px;
+            background: linear-gradient(90deg,
+                rgba(143, 166, 214, 0.28),
+                rgba(143, 166, 214, 0.04) 60%,
+                transparent);
+            transform: scaleX(0.34);
+            transform-origin: left;
+            transition: transform 0.5s cubic-bezier(.22,.61,.36,1);
         }
 
         .service-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-6px);
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(143, 166, 214, 0.28);
+            box-shadow: 0 22px 50px -18px rgba(8, 14, 34, 0.75),
+                        0 0 0 1px rgba(143, 166, 214, 0.06),
+                        0 0 60px -28px rgba(143, 166, 214, 0.45);
         }
 
+        .service-card:hover::after { transform: scaleX(1); }
+
         .service-card h3 {
-            font-size: 1.5em;
-            margin-bottom: 15px;
-            color: #a0c4ff;
+            font-family: 'Cormorant', Georgia, serif;
+            font-size: 1.55rem;
+            font-weight: 500;
+            margin-bottom: 14px;
+            color: var(--ink);
+            letter-spacing: 0.3px;
+        }
+
+        .service-card p {
+            color: var(--ink-soft);
+            font-weight: 300;
+            font-size: 0.95rem;
+            line-height: 1.65;
+        }
+
+        /* Featured karta — dominanta rastra: prvá (Obchodné právo) */
+        .service-card:first-child {
+            grid-column: span 2;
+            grid-row: span 2;
+            padding: 44px 46px 48px;
+            background:
+                radial-gradient(120% 130% at 0% 0%, rgba(27, 58, 134, 0.20) 0%, transparent 55%),
+                rgba(255, 255, 255, 0.045);
+            border-color: rgba(143, 166, 214, 0.16);
+        }
+
+        .service-card:first-child::before {
+            content: '01 — FEATURED';
+            font-size: 0.74rem;
+        }
+
+        .service-card:first-child h3 {
+            font-size: clamp(1.9rem, 3.4vw, 2.7rem);
+            margin-bottom: 20px;
+            line-height: 1.1;
+        }
+
+        .service-card:first-child p {
+            font-size: 1.08rem;
+            line-height: 1.75;
+            max-width: 46ch;
+        }
+
+        .service-card:first-child::after {
+            left: 46px;
+            right: 46px;
+            bottom: 30px;
+            transform: scaleX(0.5);
+        }
+
+        @media (max-width: 880px) {
+            .services-grid { grid-template-columns: repeat(2, 1fr); }
+            .service-card:first-child {
+                grid-column: span 2;
+                grid-row: span 1;
+            }
+        }
+
+        @media (max-width: 560px) {
+            .services-grid { grid-template-columns: 1fr; gap: 16px; }
+            .service-card:first-child {
+                grid-column: span 1;
+                padding: 34px 28px 38px;
+            }
+            .service-card:first-child h3 { font-size: 1.9rem; }
         }
 
         .contact-grid {
@@ -451,6 +646,20 @@
         <div class="aurora aurora--2"></div>
         <div class="aurora aurora--3"></div>
     </div>
+
+    <!-- Precision vrstva: decentná sémantika právnej práce (statická, bez JS) -->
+    <div class="precision" aria-hidden="true">
+        <div class="precision__sigil">§</div>
+        <div class="precision__grid"></div>
+        <div class="precision__marks">
+            <span class="pm-tl">BW · AK — REG. SAK 8229</span>
+            <span class="pm-tr">48.1486 N · 17.1077 E</span>
+            <span class="pm-mid">LEX · ARCHITECTURA · SYSTEMA</span>
+            <span class="pm-bl">§ · LV · ZMLUVA · VÝPIS · KÓTA</span>
+            <span class="pm-br">EST. MMXXIV — BRATISLAVA</span>
+        </div>
+    </div>
+
     <div class="grain" aria-hidden="true"></div>
 
     <div class="content">
